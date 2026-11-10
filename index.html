@@ -23,7 +23,7 @@ main{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;p
 svg{width:100%;height:auto;display:block}
 .nei{fill:var(--nei)}.lbl{font-size:30px;font-style:italic;fill:var(--mut)}
 .mu{cursor:pointer;outline:none}
-.mu path{fill:color-mix(in srgb,var(--r1) calc(var(--t)*100%),var(--r0));stroke:var(--panel);stroke-width:5;stroke-linejoin:round;transition:fill .2s}
+.mu path{fill:var(--f,var(--r0));stroke:var(--panel);stroke-width:5;stroke-linejoin:round;transition:fill .2s}
 .mu.e path{fill:var(--empty);stroke:var(--mut);stroke-width:3;stroke-dasharray:10 8}
 .mu.off path{fill:var(--empty)}
 .mu:hover path,.mu:focus-visible path{stroke:var(--ink);stroke-width:8}
@@ -31,7 +31,7 @@ svg{width:100%;height:auto;display:block}
 .mu text{font-size:30px;font-weight:600;fill:var(--ink);text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:var(--panel);stroke-width:7px;stroke-linejoin:round}
 .mu.e text{fill:var(--mut);font-weight:400}.mu .n{font-size:46px;font-weight:800;stroke-width:9px}
 .leg{border:1px solid var(--line);position:absolute;left:12px;bottom:10px;background:var(--panel);border-radius:10px;padding:8px 12px;font-size:12px;color:var(--mut)}
-.leg b{display:block;height:8px;width:130px;border-radius:4px;margin:4px 0 2px;background:linear-gradient(90deg,var(--r0),var(--r1))}
+.leg b{display:block;height:8px;width:130px;border-radius:4px;margin:4px 0 2px;background:linear-gradient(90deg,#E1F1FA,#93CDEB,#3A93C8,#0B4672)}
 .leg div{display:flex;justify-content:space-between}
 #tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);padding:3px 9px;border-radius:6px;font-size:12px;display:none;z-index:5}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}.chips{display:flex;flex-wrap:wrap;gap:6px}.fl h2{font-size:16px;margin:16px 0 8px}.fl input{width:100%;min-width:0}.fl #count{margin-top:6px}
@@ -72,7 +72,10 @@ a{color:var(--acc)}
 .crn{display:flex;align-items:center;gap:8px;margin-bottom:4px}.crn img{height:22px;width:auto;max-width:70px;object-fit:contain}
 .lb{cursor:pointer;transition:border-color .15s,box-shadow .15s}.lb:hover,.lb:focus-visible{border-color:var(--acc);outline:none}
 .lb.on{border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 25%,transparent)}
-#op{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+#op{grid-column:1/-1;margin:2px 0 4px;padding:0;border:0}
+.opw{position:relative}.opw .opc:first-of-type{margin-top:0}
+.opx{position:absolute;top:15px;right:18px;font-size:14px}
+.opc h3{padding-right:70px}
 .oph{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.oph img{height:52px;width:auto;max-width:180px;object-fit:contain}.oph a{font-size:14px}
 .opc{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:12px}.opc h3{margin:0;font-size:17px}
 .opc dl{display:grid;grid-template-columns:190px 1fr;gap:8px 16px;margin:12px 0 0;font-size:14px}.opc dt{color:var(--mut)}.opc dd{margin:0}
@@ -107,12 +110,17 @@ const bar=$("#bar");
 function chips(){bar.innerHTML="";[["Todos",null],...sectors.map(s=>[s,s])].forEach(([t,v])=>{const b=document.createElement("button");b.className="chip";if(v)b.style.setProperty("--c",col(v));b.innerHTML=(v?"<i></i>":"")+t;b.setAttribute("aria-pressed",fs===v);b.onclick=()=>{fs=v;chips();draw()};bar.append(b)})}
 const svg=$("#svg"),tip=$("#tip");
 function strip(){const sl=$("#sl");if(sl.childElementCount)return;ORDER.forEach(k=>{const d=document.createElement("div");d.className="lb";d.dataset.k=k;d.tabIndex=0;d.setAttribute("role","button");d.setAttribute("aria-pressed","false");d.title="Ver proyecto de "+LN[k];d.innerHTML='<img alt="'+LN[k]+'" src="'+LG[k]+'">';sl.append(d)})}
+// Escala de calor: de azul muy claro (menos socios) a azul oscuro (más socios)
+const HEAT=["#E1F1FA","#93CDEB","#3A93C8","#0B4672"];
+function heat(t){t=Math.max(0,Math.min(1,t));const p=t*(HEAT.length-1),i=Math.min(HEAT.length-2,Math.floor(p)),f=p-i;
+ const a=HEAT[i].match(/\w\w/g).map(h=>parseInt(h,16)),b=HEAT[i+1].match(/\w\w/g).map(h=>parseInt(h,16));
+ return "rgb("+a.map((v,j)=>Math.round(v+(b[j]-v)*f)).join(",")+")"}
 function draw(){strip();
  const cnt=m=>m.rs.filter(ok).length,mx=Math.max(1,...muns.map(cnt));$("#mx").textContent=mx;
  svg.innerHTML='<rect width="'+W+'" height="'+H+'" fill="var(--sea)"/><path class="nei" d="'+NEI+'"/><text class="lbl" x="60" y="80">Mar Caribe</text><text class="lbl" x="'+(W-60)+'" y="'+(H-60)+'" text-anchor="end">Venezuela</text>';
  muns.forEach(m=>{const n=cnt(m),e=!m.rs.length;
   const g=document.createElementNS(NS,"g");g.setAttribute("class","mu"+(e?" e":n?"":" off")+(m.m==sel?" sel":""));
-  g.style.setProperty("--t",n?((n-1)/Math.max(1,mx-1)*.9+.1):0);
+  g.style.setProperty("--t",n?((n-1)/Math.max(1,mx-1)*.9+.1):0);if(n)g.style.setProperty("--f",heat(mx>1?(n-1)/(mx-1):1));
   g.setAttribute("tabindex","0");g.setAttribute("role","button");g.setAttribute("aria-label",m.m+(e?": sin socios registrados":": "+n+" socios"));
   g.innerHTML='<path d="'+m.d+'"/>'+(e?'':'<text class="n" x="'+m.x+'" y="'+(m.y+14)+'">'+(n||"")+'</text>')+'<text x="'+m.x+'" y="'+(m.y+(e?10:56))+'" style="font-size:'+(e?24:30)+'px">'+m.m+'</text>';
   g.onclick=()=>{sel=m.m;view="paq";draw()};g.onkeydown=ev=>{if(ev.key=="Enter"||ev.key==" "){ev.preventDefault();g.onclick()}};
@@ -228,13 +236,13 @@ function dates(rs,i,last){if(i<0)return "";const v=rs.map(x=>x.r[i]).filter(x=>t
 function total(rs,i){if(i<0)return "";const v=rs.map(x=>nm(x.r[i])).filter(Number.isFinite);return v.length?fm(v.reduce((a,b)=>a+b,0)):""}
 const val=v=>v?es(v):'<span class="nd">Sin dato aún</span>';
 function orgPanel(k){
- const op=$("#op");document.querySelectorAll("#sl .lb").forEach(b=>{const on=b.dataset.k==k;b.classList.toggle("on",on);b.setAttribute("aria-pressed",on)});
+ const op=$("#op");if(op.parentElement!==$("#sl"))$("#sl").append(op);document.querySelectorAll("#sl .lb").forEach(b=>{const on=b.dataset.k==k;b.classList.toggle("on",on);b.setAttribute("aria-pressed",on)});
  if(!k){op.hidden=true;op.innerHTML="";return}
  op.hidden=false;
  if(!RAW){op.innerHTML='<p class="sub">Cargando datos…</p>';return}
  const rs=RAW.filter(x=>lk(x.lider)==k||lk(x.impl)==k),P=new Map();
  rs.forEach(x=>{const key=[x.lider,x.impl,x.proy].map(nz).join("|");if(!P.has(key))P.set(key,{lider:x.lider,impl:x.impl,proy:x.proy,rows:[]});P.get(key).rows.push(x)});
- let h='<div class="oph"><img alt="'+LN[k]+'" src="'+LG[k]+'"><a href="#" id="opx">Cerrar</a></div>';
+ let h='<div class="opw"><a href="#" id="opx" class="opx">Cerrar</a>';
  if(!P.size)h+='<p>Esta organización todavía no tiene registros en el archivo de datos.</p>';
  h+=[...P.values()].sort((a,b)=>az(a.lider||a.impl,b.lider||b.impl)).map(p=>{
   const M={};p.rows.forEach(x=>{const m=x.mun||x.munTxt||"Sin municipio";(M[m]=M[m]||new Set());if(x.com)M[m].add(nz(x.com))});
@@ -242,9 +250,14 @@ function orgPanel(k){
   '<dl><dt>Proyecto</dt><dd>'+val(p.proy)+'</dd><dt>Fecha de inicio</dt><dd>'+val(dates(p.rows,IX.ini,false))+'</dd><dt>Fecha de finalización</dt><dd>'+val(dates(p.rows,IX.fin,true))+'</dd>'+
   '<dt>Número de familias</dt><dd>'+val(total(p.rows,IX.fam))+'</dd><dt>Número de personas</dt><dd>'+val(total(p.rows,IX.per))+'</dd>'+
   '<dt>Municipios</dt><dd>'+Object.keys(M).sort(az).map(m=>es(m)+(M[m].size?' <span class="nd">('+M[m].size+(M[m].size==1?' comunidad':' comunidades')+')</span>':'')).join(" · ")+'</dd></dl></div>'}).join("");
- op.innerHTML=h;
+ op.innerHTML=h+'</div>';place();
  $("#opx").onclick=e=>{e.preventDefault();OPK=null;orgPanel(null)};
 }
+// Ubica la ficha justo debajo de la fila donde está el logo seleccionado
+function place(){const sl=$("#sl"),op=$("#op"),it=[...sl.querySelectorAll(".lb")],b=it.find(x=>x.dataset.k==OPK);if(!b)return;
+ const cols=getComputedStyle(sl).gridTemplateColumns.split(" ").filter(Boolean).length||1,i=it.indexOf(b),end=Math.min(it.length,Math.ceil((i+1)/cols)*cols)-1;
+ if(it[end].nextElementSibling!==op)it[end].after(op)}
+addEventListener("resize",()=>{if(OPK)place()});
 $("#sl").addEventListener("click",e=>{const b=e.target.closest(".lb");if(!b)return;OPK=OPK==b.dataset.k?null:b.dataset.k;orgPanel(OPK);if(OPK)$("#op").scrollIntoView({behavior:"smooth",block:"nearest"})});
 $("#sl").addEventListener("keydown",e=>{const b=e.target.closest(".lb");if(b&&(e.key=="Enter"||e.key==" ")){e.preventDefault();b.click()}});
 
